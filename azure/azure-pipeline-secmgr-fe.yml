@@ -1,0 +1,252 @@
+# Build an Java application using Maven. 
+# Build a Docker image and push it to a registry. 
+# Deploy the image to an AppService for Containers instance.
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- none
+#  batch: true
+#  branches:
+#    include:
+#    - pipeline-test
+#    exclude:
+#    - master
+
+#resources:
+#- repo: self
+
+variables:
+    ServiceConnection: 'amadeus-azuredevops-DCE-POC'
+    #mavenPomFile: 'microservices/front-end/pom_for_containers.xml'
+    #mavenTestRunTitle: 'RegApp-Front-End'
+    #sonarQubeProjectName: 'RegApp-Front-End'
+    #sonarQubeProjectKey: 'RegApp-Front-End'
+    #owaspDCProjectName: 'RegApp-Front-End'
+    #owaspDCScanPath: 'microservices/front-end/target/**/*.jar'
+    #owaspDCTestRunTitle: 'RegApp-Front-End'
+    # Container registry service connection established during pipeline creation    
+    dockerRegistryServiceConnection: 'dce-container-registry-sp'
+    imageRepository: 'dce-httpd-dev'
+    containerRegistry: 'dcecontaineregistry.azurecr.io'
+    dockerfilePath: '$(build.sourcesdirectory)/microservices/FrontEnd/Dockerfile'
+    copyFilesContents: '**/FrontEnd/target/**'
+    tag: '$(Build.BuildId)'
+    appServiceName: 'dce-httpd-dev'
+    appSettings: '-Port 80 -WEBSITES_CONTAINER_START_TIME_LIMIT 1800
+    aseAppServiceName: 'dce-httpd-ase-dev'
+    aseAppSettings: '-Port 80 -WEBSITES_CONTAINER_START_TIME_LIMIT 1800
+
+    # Agent VM image name
+    vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    workspace:
+      clean: all # outputs | resources | all # what to clean up before the job runs
+    pool:
+        vmImage: $(vmImageName)
+    steps:
+    #- task: SonarQubePrepare@5
+    #  inputs:
+    #    SonarQube: 'dcepocsonarqubeaci'
+    #    scannerMode: 'Other'
+    #    extraProperties: |
+          # Additional properties that will be passed to the scanner,
+          # Put one key=value per line, example:
+          # sonar.exclusions=**/*.bin
+    #      sonar.projectName=$(sonarQubeProjectName)
+    #      sonar.projectKey=$(sonarQubeProjectKey)
+
+    #- task: JavaToolInstaller@0
+    #  inputs:
+    #    versionSpec: '11'
+    #    jdkArchitectureOption: 'x64'
+    #    jdkSourceOption: 'PreInstalled'
+
+    #- task: Maven@3
+    #  displayName: 'building packages with SonarQube analysis'
+    #  inputs:
+    #    mavenPomFile: '$(mavenPomFile)'
+    #    #options: 'mavenOptions: ''-Xmx6144m''         javaHomeOption: ''JDKVersion''         jdkVersionOption: ''1.11''         jdkArchitectureOption: ''x64'''
+    #    mavenOptions: '-Xmx6144m'
+    #    publishJUnitResults: true
+    #    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    #    testRunTitle: $(mavenTestRunTitle)
+        #codeCoverageToolOption: 'JaCoCo'
+        #codeCoverageClassFilter: 'amadeus.com'
+        #codeCoverageClassFilesDirectories: 'microservices/data-management/target/main/java/com/amadeus/regapp/dataManagement'
+        #codeCoverageSourceDirectories: 'microservices/data-management/src/main/java/com/amadeus/regapp/dataManagement'
+        #codeCoverageFailIfEmpty: true
+        #codeCoverageRestoreOriginalPomXml: true
+    #    javaHomeOption: 'JDKVersion'
+    #    jdkVersionOption: '1.11'
+    #    mavenVersionOption: 'Default'
+    #    mavenAuthenticateFeed: false
+    #    effectivePomSkip: false
+    #    sonarQubeRunAnalysis: true
+        #isJacocoCoverageReportXML: true
+    #    sqMavenPluginVersionChoice: 'latest'
+    #    checkStyleRunAnalysis: true
+    #    pmdRunAnalysis: true
+        #findBugsRunAnalysis: true
+
+    #- task: SonarQubePublish@5
+    #  inputs:
+    #    pollingTimeoutSec: '300'
+
+    #- task: dependency-check-build-task@6
+    #  displayName: 'Run OWASP Dependency Check'
+    #  inputs:
+    #    projectName: $(owaspDCProjectName)
+    #    scanPath: $(owaspDCScanPath)
+    #    format: 'HTML,JSON,JUNIT'
+
+    #- task: PublishTestResults@2
+    #  displayName: 'Publish OWASP Dependency Check Results'
+    #  inputs:
+    #    testResultsFormat: 'JUnit' # Options: JUnit, NUnit, VSTest, xUnit, cTest
+    #    #testResultsFiles: '**/TEST-*.xml'
+    #    testResultsFiles: '**/dependency-check-junit.xml' 
+    #    #searchFolder: '$(System.DefaultWorkingDirectory)' # Optional
+    #    #searchFolder: '$(build.artifactstagingdirectory)'
+    #    searchFolder:  '$(Pipeline.Workspace)'
+    #    #mergeTestResults: false # Optional
+    #    #failTaskOnFailedTests: false # Optional
+    #    testRunTitle: $(owaspDCTestRunTitle) # Optional
+    #    #buildPlatform: # Optional
+    #    #buildConfiguration: # Optional
+    #    #publishRunAttachments: true # Optional
+
+    #- task: CopyFiles@2
+    #  displayName: 'Copy Files'
+    #  inputs:
+    #    SourceFolder: $(build.sourcesdirectory)
+    #    Contents: $(copyFilesContents) 
+    #    #TargetFolder: '$(build.artifactstagingdirectory)'
+    #    TargetFolder: '$(Pipeline.Workspace)'
+
+    #- task: PublishBuildArtifacts@1
+    #  displayName: 'Publish Artifact'
+    #  inputs:
+    #    TargetPath: '$(build.artifactstagingdirectory)'
+    #    ArtifactName: 'drop'
+
+    # Publish pipeline artifacts
+    # Publish (upload) a file or directory as a named artifact for the current run
+    #- task: PublishPipelineArtifact@1
+    #  displayName: 'Publish Artifact'
+    #  inputs:
+    #    targetPath: '$(Pipeline.Workspace)' # Required 
+    #    artifactName: 'drop' # Optional
+    #    artifactType: 'pipeline' # Required. Options: pipeline, filepath. Default value: pipeline
+        #fileSharePath: '\server\folderName' # Required when artifactType = filepath
+        #parallel: false # Optional. Default value: false
+        #parallelCount: 1 # Optional. Value must be at least 1 and not greater than 128. Default value: 8
+
+    #- task: Docker@2
+    #  displayName: Build and push an image to container registry
+    #  inputs:
+    #    azureSubscriptionEndpoint: $(ServiceConnection)
+    #    command: buildAndPush
+    #    repository: $(imageRepository)
+    #    Dockerfile: $(dockerfilePath)
+    #    containerRegistry: $(ContainerRegistry)
+    #    tags: |
+    #        $(tag)
+            
+    #- task: Docker@2
+    #  displayName: Build an image
+    #  inputs:
+    #    containerRegistry: $(ContainerRegistry)
+    #    command: 'build'
+    #    Dockerfile: $(dockerfilePath)
+        #repository: '$(imageRepository):$(Build.BuildNumber)'
+    #    repository: '$(imageRepository)'
+    
+    #    tags: latest
+        #arguments: --label buildtype=nightly
+
+    #- task: Docker@2
+    #  displayName: Push an image to container registry
+    #  inputs:
+    #    containerRegistry: $(ContainerRegistry)
+    #    command: 'push'
+        #repository: '$(imageRepository):$(Build.BuildNumber)'
+    #    repository: '$(imageRepository)'
+    #    tags: latest
+        #arguments: --label buildtype=nightly
+
+    - task: Docker@1
+      displayName: 'Build an image'
+      inputs:
+        azureSubscriptionEndpoint: $(ServiceConnection)
+        azureContainerRegistry: $(ContainerRegistry)
+        Dockerfile: $(dockerfilePath)
+        imageName: '$(imageRepository):$(Build.BuildNumber)'
+        includeLatestTag: true
+        useDefaultContext: false
+        buildContext: .
+
+    - task: Docker@1
+      displayName: 'Push an image'
+      inputs:
+        azureSubscriptionEndpoint: $(ServiceConnection)
+        azureContainerRegistry: $(ContainerRegistry)
+        command: 'Push an image'
+        qualifyImageName: true
+        imageName: '$(imageRepository):$(Build.BuildNumber)'
+        includeLatestTag: true
+
+- stage: Deploy
+  displayName: 'Deploy stage'
+  jobs:
+  - deployment: Deploy_App_Service   # name of the deployment job, A-Z, a-z, 0-9, and underscore. The word "deploy" is a keyword and is unsupported as the deployment name.
+    displayName: Deploy to App Service  # friendly name to display in the UI
+    pool:                # not required for virtual machine resources
+      vmImage: $(vmImageName)      # Use only global level variables for defining a pool name. Stage/job level variables are not supported to define pool name.
+      #demands: string | [ string ]
+    workspace:
+      clean: all # what to clean up before the job runs -> outputs | resources | all
+    #dependsOn: string
+    #condition: string
+    #continueOnError: boolean                # 'true' if future jobs should run even if this job fails; defaults to 'false'
+    #container: containerReference # container to run this job inside
+    #services: { string: string | container } # container resources to run as a service container
+    #timeoutInMinutes: nonEmptyString        # how long to run the job before automatically cancelling
+    #cancelTimeoutInMinutes: nonEmptyString  # how much time to give 'run always even if cancelled tasks' before killing them
+    #variables: # several syntaxes, see specific section
+    environment: 'httpd-dev'  # target environment name and optionally a resource name to record the deployment history; format: <environment-name>.<resource-name>
+    strategy:
+      runOnce:    #rolling, canary are the other strategies that are supported
+        deploy:
+          steps: #[ script | bash | pwsh | powershell | checkout | task | templateReference ]
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy to ASE'
+            inputs:
+              azureSubscription: $(ServiceConnection)
+              appName: $(aseAppServiceName)
+              containers: '$(containerRegistry)/$(imageRepository):$(Build.BuildNumber)'
+              appSettings: $(aseAppSettings)
+  #- job: Deploy_App_Service
+  #  displayName: Deploy to App Service
+  #  pool:
+  #      vmImage: $(vmImageName)
+  #  steps:
+    #- task: AzureWebAppContainer@1
+    #  displayName: 'Deploy to App Service for Containers'
+    #  inputs:
+    #    azureSubscription: $(ServiceConnection)
+    #    appName: $(appServiceName)
+    #    containers: '$(containerRegistry)/$(imageRepository):$(Build.BuildNumber)'
+    #    appSettings: $(appSettings)
+    #- task: AzureWebAppContainer@1
+    #  displayName: 'Deploy to ASE'
+    #  inputs:
+    #    azureSubscription: $(ServiceConnection)
+    #    appName: $(aseAppServiceName)
+    #    containers: '$(containerRegistry)/$(imageRepository):$(Build.BuildNumber)'
+    #    appSettings: $(aseAppSettings)
